@@ -471,25 +471,6 @@ export default function NameSpinner() {
           flex-direction: column;
           gap: 1rem;
         }
-        @media (min-width: 860px) {
-          .ns-app { max-width: 1180px; padding: 1.75rem 2rem 2.5rem; }
-        }
-
-        .ns-layout { display: flex; flex-direction: column; gap: 1rem; }
-        @media (min-width: 860px) {
-          .ns-layout {
-            display: grid;
-            grid-template-columns: minmax(340px, 1fr) minmax(380px, 460px);
-            grid-template-areas:
-              "add      spinner"
-              "selected spinner";
-            align-items: start;
-            gap: 1.5rem;
-          }
-          .ns-add-card { grid-area: add; }
-          .ns-spinner-card { grid-area: spinner; position: sticky; top: 1.5rem; }
-          .ns-selected-card { grid-area: selected; }
-        }
         .ns-card {
           background: #fff;
           border: none;
@@ -921,273 +902,266 @@ export default function NameSpinner() {
           </div>
         </div>
 
-        <div className="ns-layout">
-          <div className="ns-card ns-add-card">
-            <div className="ns-section-title">
-              <Users size={13} /> Add names
-            </div>
-            <textarea
-              ref={textareaRef}
-              className="ns-name-input"
-              placeholder={
-                "Paste names separated by commas\ne.g. Alice, Bob, Carol, Dave, ..."
+        <div className="ns-card">
+          <div className="ns-section-title">
+            <Users size={13} /> Add names
+          </div>
+          <textarea
+            ref={textareaRef}
+            className="ns-name-input"
+            placeholder={
+              "Paste names separated by commas\ne.g. Alice, Bob, Carol, Dave, ..."
+            }
+          />
+          <div className="ns-btn-row">
+            <button
+              className="ns-btn ns-btn-primary"
+              style={{ flex: 1 }}
+              onClick={addNames}
+            >
+              <Plus size={15} /> Add names
+            </button>
+            <button
+              className="ns-btn ns-btn-danger"
+              onClick={clearAll}
+              aria-label="Clear all names"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+
+          <div className="ns-divider">
+            <span>or</span>
+          </div>
+
+          <div
+            className={
+              "ns-dropzone" +
+              (dragActive ? " ns-drag-active" : "") +
+              (importing ? " ns-importing" : "")
+            }
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragActive(true);
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragActive(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current && fileInputRef.current.click();
               }
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="ns-sr-only"
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.target.value = "";
+              }}
             />
-            <div className="ns-btn-row">
-              <button
-                className="ns-btn ns-btn-primary"
-                style={{ flex: 1 }}
-                onClick={addNames}
-              >
-                <Plus size={15} /> Add names
-              </button>
-              <button
-                className="ns-btn ns-btn-danger"
-                onClick={clearAll}
-                aria-label="Clear all names"
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-
-            <div className="ns-divider">
-              <span>or</span>
-            </div>
-
-            <div
-              className={
-                "ns-dropzone" +
-                (dragActive ? " ns-drag-active" : "") +
-                (importing ? " ns-importing" : "")
-              }
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                handleFiles(e.dataTransfer.files);
-              }}
-              onClick={() =>
-                fileInputRef.current && fileInputRef.current.click()
-              }
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  fileInputRef.current && fileInputRef.current.click();
-                }
-              }}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="ns-sr-only"
-                onChange={(e) => {
-                  handleFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-              {importing ? (
-                <Loader2 className="ns-spin-icon" size={20} />
-              ) : (
-                <UploadCloud size={20} />
-              )}
-              <div className="ns-dropzone-text">
-                <strong>
-                  {importing
-                    ? "Reading file…"
-                    : dragActive
-                      ? "Drop to import"
-                      : "Import an Excel or CSV file"}
-                </strong>
-                <span>
-                  .xlsx · .xls · .csv — names from every cell are added
-                </span>
-              </div>
-            </div>
-
-            <div className="ns-tag-wrap">
-              {allNames.map((n, i) => (
-                <span
-                  key={n + i}
-                  className={
-                    "ns-tag" +
-                    (selected.includes(n) ? " ns-used" : "") +
-                    (removingTag === n ? " ns-removing" : "")
-                  }
-                  title={n}
-                  style={{
-                    animationDelay: removingTag === n ? "0s" : i * 0.03 + "s",
-                  }}
-                >
-                  <span className="ns-tag-text">{n}</span>
-                  <button
-                    className="ns-tag-delete"
-                    aria-label={`Remove ${n}`}
-                    onClick={() => removeName(n)}
-                  >
-                    <X size={10} />
-                  </button>
-                </span>
-              ))}
+            {importing ? (
+              <Loader2 className="ns-spin-icon" size={20} />
+            ) : (
+              <UploadCloud size={20} />
+            )}
+            <div className="ns-dropzone-text">
+              <strong>
+                {importing
+                  ? "Reading file…"
+                  : dragActive
+                    ? "Drop to import"
+                    : "Import an Excel or CSV file"}
+              </strong>
+              <span>.xlsx · .xls · .csv — names from every cell are added</span>
             </div>
           </div>
 
-          <div className="ns-card ns-spinner-card">
-            <div className="ns-stats">
-              <div className="ns-stat ns-stat-total">
-                <div className={"ns-stat-n" + (bumpTotal ? " ns-bump" : "")}>
-                  {totalCount}
-                </div>
-                <div className="ns-stat-l">Total</div>
-              </div>
-              <div className="ns-stat ns-stat-remain">
-                <div className={"ns-stat-n" + (bumpRemain ? " ns-bump" : "")}>
-                  {remainCount}
-                </div>
-                <div className="ns-stat-l">Remaining</div>
-              </div>
-              <div className="ns-stat ns-stat-drawn">
-                <div className={"ns-stat-n" + (bumpDrawn ? " ns-bump" : "")}>
-                  {selected.length}
-                </div>
-                <div className="ns-stat-l">Drawn</div>
-              </div>
-            </div>
-
-            {totalCount > 0 && (
-              <div className="ns-progress">
-                <div className="ns-progress-track">
-                  <div
-                    className="ns-progress-fill"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div
-              className={
-                "ns-spinner-wrap" +
-                (flash ? " ns-flash" : "") +
-                (fastPhase ? " ns-fast" : "") +
-                (nearStop ? " ns-near-stop" : "")
-              }
-            >
-              <div className="ns-spin-track">
-                {displayItems.map((n, i) => (
-                  <div
-                    key={i}
-                    className={
-                      "ns-spin-item" +
-                      (winnerIdx !== undefined && i === 6
-                        ? " ns-winner"
-                        : i === 6
-                          ? " ns-center"
-                          : "")
-                    }
-                  >
-                    {n || ""}
-                  </div>
-                ))}
-              </div>
-              <div className="ns-fade-top" />
-              <div className="ns-fade-bottom" />
-              <div className="ns-spin-line-top" />
-              <div className="ns-spin-line-bot" />
-              {confetti.map((c) => (
-                <div
-                  key={c.id}
-                  className={`ns-confetti shape-${c.shape}`}
-                  style={{
-                    left: c.left + "%",
-                    background: c.shape === "triangle" ? "transparent" : c.bg,
-                    borderBottomColor:
-                      c.shape === "triangle" ? c.bg : undefined,
-                    width: c.shape === "triangle" ? 0 : c.size,
-                    height: c.shape === "triangle" ? 0 : c.size,
-                    borderLeftWidth:
-                      c.shape === "triangle" ? c.size / 2 : undefined,
-                    borderRightWidth:
-                      c.shape === "triangle" ? c.size / 2 : undefined,
-                    borderBottomWidth:
-                      c.shape === "triangle" ? c.size : undefined,
-                    borderLeftColor:
-                      c.shape === "triangle" ? "transparent" : undefined,
-                    borderRightColor:
-                      c.shape === "triangle" ? "transparent" : undefined,
-                    animationDuration: c.duration + "s",
-                    animationDelay: c.delay + "s",
-                    "--driftX": c.driftX + "px",
-                    "--rot": c.rotSign,
-                  }}
-                />
-              ))}
-            </div>
-
-            {showResult && (
-              <div className="ns-ticket">
-                <span className="ns-ticket-ribbon">
-                  <Trophy size={12} /> Winner
-                </span>
-                <div className="ns-ticket-name">{resultName}</div>
-                <div className="ns-ticket-sub">Draw #{selected.length}</div>
-              </div>
-            )}
-
-            <div className="ns-spin-btn-wrap">
-              <button
+          <div className="ns-tag-wrap">
+            {allNames.map((n, i) => (
+              <span
+                key={n + i}
                 className={
-                  "ns-btn ns-btn-primary ns-spin-btn" +
-                  (spinning ? " ns-spinning" : "")
+                  "ns-tag" +
+                  (selected.includes(n) ? " ns-used" : "") +
+                  (removingTag === n ? " ns-removing" : "")
                 }
-                style={{ padding: "10px 32px", fontSize: 15 }}
-                onClick={startSpin}
-                disabled={spinning}
+                title={n}
+                style={{
+                  animationDelay: removingTag === n ? "0s" : i * 0.03 + "s",
+                }}
               >
-                {spinning ? (
-                  <Loader2 className="ns-spin-icon" size={16} />
-                ) : (
-                  <Play size={15} />
-                )}
-                {spinning ? "Spinning…" : "Spin"}
-              </button>
-              {selected.length > 0 && (
+                <span className="ns-tag-text">{n}</span>
                 <button
-                  className="ns-btn ns-btn-outline-red"
-                  onClick={resetSpins}
+                  className="ns-tag-delete"
+                  aria-label={`Remove ${n}`}
+                  onClick={() => removeName(n)}
                 >
-                  <RotateCcw size={14} /> Reset
+                  <X size={10} />
                 </button>
-              )}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="ns-card">
+          <div className="ns-stats">
+            <div className="ns-stat ns-stat-total">
+              <div className={"ns-stat-n" + (bumpTotal ? " ns-bump" : "")}>
+                {totalCount}
+              </div>
+              <div className="ns-stat-l">Total</div>
+            </div>
+            <div className="ns-stat ns-stat-remain">
+              <div className={"ns-stat-n" + (bumpRemain ? " ns-bump" : "")}>
+                {remainCount}
+              </div>
+              <div className="ns-stat-l">Remaining</div>
+            </div>
+            <div className="ns-stat ns-stat-drawn">
+              <div className={"ns-stat-n" + (bumpDrawn ? " ns-bump" : "")}>
+                {selected.length}
+              </div>
+              <div className="ns-stat-l">Drawn</div>
             </div>
           </div>
 
-          {selected.length > 0 && (
-            <div className="ns-card ns-selected-card">
-              <div className="ns-section-title">
-                <CheckCircle2 size={13} /> Selected names
-              </div>
-              <div className="ns-summary-list">
-                {[...selected].reverse().map((name, i) => (
-                  <div
-                    className="ns-summary-item"
-                    key={name + i}
-                    style={{ animationDelay: ".05s" }}
-                  >
-                    <div className="ns-num">{selected.length - i}</div>
-                    <div className="ns-sname">{name}</div>
-                  </div>
-                ))}
+          {totalCount > 0 && (
+            <div className="ns-progress">
+              <div className="ns-progress-track">
+                <div
+                  className="ns-progress-fill"
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
             </div>
           )}
+
+          <div
+            className={
+              "ns-spinner-wrap" +
+              (flash ? " ns-flash" : "") +
+              (fastPhase ? " ns-fast" : "") +
+              (nearStop ? " ns-near-stop" : "")
+            }
+          >
+            <div className="ns-spin-track">
+              {displayItems.map((n, i) => (
+                <div
+                  key={i}
+                  className={
+                    "ns-spin-item" +
+                    (winnerIdx !== undefined && i === 4
+                      ? " ns-winner"
+                      : i === 4
+                        ? " ns-center"
+                        : "")
+                  }
+                >
+                  {n || ""}
+                </div>
+              ))}
+            </div>
+            <div className="ns-fade-top" />
+            <div className="ns-fade-bottom" />
+            <div className="ns-spin-line-top" />
+            <div className="ns-spin-line-bot" />
+            {confetti.map((c) => (
+              <div
+                key={c.id}
+                className={`ns-confetti shape-${c.shape}`}
+                style={{
+                  left: c.left + "%",
+                  background: c.shape === "triangle" ? "transparent" : c.bg,
+                  borderBottomColor: c.shape === "triangle" ? c.bg : undefined,
+                  width: c.shape === "triangle" ? 0 : c.size,
+                  height: c.shape === "triangle" ? 0 : c.size,
+                  borderLeftWidth:
+                    c.shape === "triangle" ? c.size / 2 : undefined,
+                  borderRightWidth:
+                    c.shape === "triangle" ? c.size / 2 : undefined,
+                  borderBottomWidth:
+                    c.shape === "triangle" ? c.size : undefined,
+                  borderLeftColor:
+                    c.shape === "triangle" ? "transparent" : undefined,
+                  borderRightColor:
+                    c.shape === "triangle" ? "transparent" : undefined,
+                  animationDuration: c.duration + "s",
+                  animationDelay: c.delay + "s",
+                  "--driftX": c.driftX + "px",
+                  "--rot": c.rotSign,
+                }}
+              />
+            ))}
+          </div>
+
+          {showResult && (
+            <div className="ns-ticket">
+              <span className="ns-ticket-ribbon">
+                <Trophy size={12} /> Winner
+              </span>
+              <div className="ns-ticket-name">{resultName}</div>
+              <div className="ns-ticket-sub">Draw #{selected.length}</div>
+            </div>
+          )}
+
+          <div className="ns-spin-btn-wrap">
+            <button
+              className={
+                "ns-btn ns-btn-primary ns-spin-btn" +
+                (spinning ? " ns-spinning" : "")
+              }
+              style={{ padding: "10px 32px", fontSize: 15 }}
+              onClick={startSpin}
+              disabled={spinning}
+            >
+              {spinning ? (
+                <Loader2 className="ns-spin-icon" size={16} />
+              ) : (
+                <Play size={15} />
+              )}
+              {spinning ? "Spinning…" : "Spin"}
+            </button>
+            {selected.length > 0 && (
+              <button
+                className="ns-btn ns-btn-outline-red"
+                onClick={resetSpins}
+              >
+                <RotateCcw size={14} /> Reset
+              </button>
+            )}
+          </div>
         </div>
+
+        {selected.length > 0 && (
+          <div className="ns-card">
+            <div className="ns-section-title">
+              <CheckCircle2 size={13} /> Selected names
+            </div>
+            <div className="ns-summary-list">
+              {[...selected].reverse().map((name, i) => (
+                <div
+                  className="ns-summary-item"
+                  key={name + i}
+                  style={{ animationDelay: ".05s" }}
+                >
+                  <div className="ns-num">{selected.length - i}</div>
+                  <div className="ns-sname">{name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
